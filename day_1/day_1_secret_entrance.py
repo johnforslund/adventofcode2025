@@ -63,6 +63,8 @@ for rotation in document:
     steps = int(rotation[1:])
 
     if direction == "L":
+        if dial == 0:
+            dial = 100    # Adjust to handle exact 0 case, without it the integer division fails
         full_turns += abs((dial - steps) // 100)
         dial = (dial - steps) % 100
     elif direction == "R":
@@ -71,6 +73,6 @@ for rotation in document:
 
 
 print(f"Output: {full_turns}")
-    
+
 
 
