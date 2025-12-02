@@ -58,7 +58,12 @@ print(f"Output: {count_zeros}")
 dial = 50  # Starting position of the dial
 full_turns = 0  # Count of full turns aka when crossing 0
 
-for rotation in document:
+for n in range(len(document)):
+    print(f"Before rotation: dial={dial}, full_turns={full_turns}")
+
+    rotation = document[n]
+    print(f"Processing rotation nr {n}: {rotation}")
+
     direction = rotation[0]    # "L" or "R"
     steps = int(rotation[1:])
 
@@ -67,9 +72,15 @@ for rotation in document:
             dial = 100    # Adjust to handle exact 0 case, without it the integer division fails
         full_turns += abs((dial - steps) // 100)
         dial = (dial - steps) % 100
+        if dial == 0:     # Adjusted to handle the dial landing exactly on 0, as without it the integer division misses this case
+            full_turns += 1
     elif direction == "R":
         full_turns += (dial + steps) // 100
         dial = (dial + steps) % 100
+    
+    if n == len(document) - 1:
+        if dial == 0:
+            full_turns += 1  # Final check if last rotation ended exactly on 0
 
 
 print(f"Output: {full_turns}")
