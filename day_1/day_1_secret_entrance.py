@@ -50,3 +50,27 @@ print(f"Output: {count_zeros}")
 
 
 
+##############
+##  Part 2  ##
+##############
+
+
+dial = 50  # Starting position of the dial
+full_turns = 0  # Count of full turns aka when crossing 0
+
+for rotation in document:
+    direction = rotation[0]    # "L" or "R"
+    steps = int(rotation[1:])
+
+    if direction == "L":
+        full_turns += abs((dial - steps) // 100)
+        dial = (dial - steps) % 100
+    elif direction == "R":
+        full_turns += (dial + steps) // 100
+        dial = (dial + steps) % 100
+
+
+print(f"Output: {full_turns}")
+    
+
+
