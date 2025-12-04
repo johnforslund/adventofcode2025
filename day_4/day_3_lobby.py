@@ -58,19 +58,23 @@ def count_accessible_rolls(grid, sequential_removal=False, iterative_removal=Fal
     
     # Iterate through every space in the grid
     if iterative_removal:   # i.e. checking the grid multiple times until no more rolls can be accessed
+        print("Iterative removal activated")
         previous_total_accessible_rolls = -1
         while total_accessible_rolls != previous_total_accessible_rolls:
+            print("While loop iteration started")
             previous_total_accessible_rolls = total_accessible_rolls
-            accessible_rolls, updated_grid = _check_each_space(updated_grid, adjacent_positions, sequential_removal, out_of_bounds_allowed)
+            print(f"Previous total accessible rolls: {previous_total_accessible_rolls}")
+            accessible_rolls, updated_grid = _check_each_space(updated_grid, adjacent_positions, sequential_removal, iterative_removal, out_of_bounds_allowed)
             total_accessible_rolls += accessible_rolls
+            print(f"New total accessible rolls: {total_accessible_rolls}")
     else:
-        accessible_rolls, updated_grid = _check_each_space(updated_grid, adjacent_positions, sequential_removal, out_of_bounds_allowed)
+        accessible_rolls, updated_grid = _check_each_space(updated_grid, adjacent_positions, sequential_removal, iterative_removal, out_of_bounds_allowed)
         total_accessible_rolls = accessible_rolls
 
     return total_accessible_rolls, updated_grid
 
 
-def _check_each_space(updated_grid, adjacent_positions, sequential_removal, out_of_bounds_allowed):
+def _check_each_space(updated_grid, adjacent_positions, sequential_removal, iterative_removal, out_of_bounds_allowed):
     rows, cols = updated_grid.shape
     accessible_rolls = 0
     for r in range(rows):
@@ -83,7 +87,7 @@ def _check_each_space(updated_grid, adjacent_positions, sequential_removal, out_
                     if not out_of_bounds_allowed:
                         if not (0 <= nr < rows and 0 <= nc < cols):   # Checking bounds so not outside the grid
                             continue
-                    if not sequential_removal:
+                    if not sequential_removal and not iterative_removal:
                         if (updated_grid[nr, nc] == "@") or (updated_grid[nr, nc] == "X"):
                             adjacent_rolls += 1
                     else:
@@ -106,3 +110,11 @@ print(f"Updated grid: \n{updated_grid}")
 ##############
 ##  Part 2  ##
 ##############
+
+
+# Change: It should now be done iteratively until no more rolls can be accessed.
+# Need to pass the parameter iterative_removal to the _count_accessible_rolls function as well... Then it works:
+accessible_rolls, updated_grid = count_accessible_rolls(grid=original_grid, sequential_removal=False, iterative_removal=True)
+print(f"Total number of accessible rolls: {accessible_rolls}")
+print(f"Updated grid: \n{updated_grid}")
+
