@@ -45,7 +45,7 @@ print(f"First 5 IDs to check: {doc_ids[:5]}")
 # Note: Possible functionality options:
 # [X] Turn on/off inclusive ranges on both ends (e.g. "3-5" means 3, 4 or 4, 5, or just 5)
 # [X] Turn on/off allowing overlapping ranges (if ranges overlap, remove them)
-# [ ] Turn on/off accumulating overlapping ranges (if ranges overlap, count IDs within them as fresh multiple times)
+# [-] (See branch feature/accumulate_overlaps but decided against it) Turn on/off accumulating overlapping ranges (if ranges overlap, count IDs within them as fresh multiple times)
 # [X] Allow the possibility of ranges not being in order (e.g. "1-3", "5-3", "2-4" etc)
 # [-] Convert ranges to sets for faster checking (scratched due to not holding duplicates - Counter or even better merge + bisect could be used, but probably not worth it)
 
@@ -176,5 +176,7 @@ def count_all_ids_from_fresh_ranges(fresh_ranges: list[range]) -> int:
         int: Count of all fresh IDs.
     """
     return sum(len(r) for r in fresh_ranges)
+
 fresh_id_count = count_all_ids_from_fresh_ranges(fresh_ranges)
 print(f"Number of all fresh IDs: {fresh_id_count}")
+
