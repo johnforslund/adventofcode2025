@@ -59,7 +59,7 @@ def parse_range_ids(doc_fresh: list[str], incl_start: bool = True, incl_end: boo
         incl_start (bool): Whether the start of the range is inclusive.
         incl_end (bool): Whether the end of the range is inclusive.
         allow_overlaps (bool): Whether to allow overlapping ranges, e.g. "3-5" and "5-7" becomes "3-5" and "6-7" if False.
-        sort_ranges (bool): Whether to sort the fresh_ranges (by lowest start) before checking for overlaps.
+        sort_ranges (bool): Whether to sort the fresh_ranges (by lowest start) BEFORE checking for overlaps.
     
     Returns:
         fresh_ranges (list of ranges): List of range objects representing fresh ID ranges.
@@ -69,6 +69,10 @@ def parse_range_ids(doc_fresh: list[str], incl_start: bool = True, incl_end: boo
     adj_start = 0 if incl_start else 1
     adj_end = 1 if incl_end else 0
 
+    # Sort the ranges by lowest start if needed, right from the start instead
+    if sort_ranges:
+        doc_fresh = sorted(doc_fresh, key=lambda r: int(r.split("-")[0]))
+        
     # Parse each range string into a range object
     for r in doc_fresh:
         start, end = r.split("-")           # Split from e.g. "3-5" to "3", "5"
