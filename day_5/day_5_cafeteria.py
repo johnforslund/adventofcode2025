@@ -45,7 +45,8 @@ print(f"First 5 IDs to check: {doc_ids[:5]}")
 # Note: Possible functionality options:
 # [X] Turn on/off inclusive ranges on both ends (e.g. "3-5" means 3, 4 or 4, 5, or just 5)
 # [/] #TODO WIP, see branch feature/allow-overlaps. Turn on/off allowing overlapping ranges (if ranges overlap, remove them)
-# [ ] Turn on/off accumulating overlapping ranges (if ranges overlap, count IDs within them as fresh multiple times)
+# [X] Turn on/off accumulating overlapping ranges (if ranges overlap, count IDs within them as fresh OR as spoiled)
+#     [ ] Save overlapping status for each ID and possibly each range, could be useful.
 # [X] Allow the possibility of ranges not being in order (e.g. "1-3", "5-3", "2-4" etc)
 # [-] Convert ranges to sets for faster checking (scratched due to not holding duplicates - Counter or even better merge + bisect could be used, but probably not worth it)
 
@@ -77,37 +78,50 @@ def parse_range_ids(doc_fresh: list[str], incl_start: bool = True, incl_end: boo
     return fresh_ranges
 
 
-def check_all_ids(doc_ids: list[int], fresh_ranges: list[range]) -> int:
+def check_all_ids(doc_ids: list[int], fresh_ranges: list[range], check_multiple_overlaps: bool = False, multiple_overlaps_status: bool = True) -> int:
     """Check all IDs against the fresh ID ranges and count how many are fresh.
 
     Args:
         doc_ids (list of int): List of IDs to check.
         fresh_ranges (list of ranges): List of fresh ID ranges.
+        check_multiple_overlaps (bool): Whether to check for multiple overlapping ranges.
+        multiple_overlaps_status (bool): Status to return if multiple overlaps are found (True for fresh, False for spoiled).
 
     Returns:
         int: Number of fresh IDs.
     """
     fresh_count = 0
     for id_to_check in doc_ids:
-        if check_id_status(id_to_check, fresh_ranges):
+        if check_id_status(id_to_check, fresh_ranges, check_multiple_overlaps, multiple_overlaps_status):
             fresh_count += 1
 
     return fresh_count
 
 
-def check_id_status(id_to_check: int, fresh_ranges: list[range]) -> bool:
+def check_id_status(id_to_check: int, fresh_ranges: list[range], check_multiple_overlaps: bool = False, multiple_overlaps_status: bool = True) -> bool:
     """Check if a given ID is fresh or spoiled based on the provided fresh ID ranges.
 
     Args:
         id_to_check (int): The ID to check.
         fresh_ranges (list of ranges): List of fresh ID ranges.
+        check_multiple_overlaps (bool): Whether to check for multiple overlapping ranges.
+        multiple_overlaps_status (bool): Status to return if multiple overlaps are found (True for fresh, False for spoiled).
 
     Returns:
         bool: True if the ID is fresh, False if it is spoiled.
     """
+    overlap_count = 0
     for r in fresh_ranges:
         if id_to_check in r:
-            return True  # ID is fresh
+            if check_multiple_overlaps:
+                # Check for multiple overlaps
+                overlap_count += 1
+            else:
+                return True  # Ignoring overlaps -> as soon as ID is in any range then ID is fresh
+    if overlap_count == 1:
+        return True # ID is fresh
+    if overlap_count > 1:
+        return multiple_overlaps_status  # ID status based on multiple overlaps
 
     return False  # ID is spoiled
 
@@ -116,7 +130,7 @@ def check_id_status(id_to_check: int, fresh_ranges: list[range]) -> bool:
 
 
 fresh_ranges = parse_range_ids(doc_fresh, incl_start=True, incl_end=True)
-fresh_count = check_all_ids(doc_ids, fresh_ranges)
+fresh_count = check_all_ids(doc_ids, fresh_ranges, check_multiple_overlaps=True, multiple_overlaps_status=False)
 print(f"Number of fresh IDs: {fresh_count}")
 
 
