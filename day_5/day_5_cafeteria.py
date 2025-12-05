@@ -129,25 +129,21 @@ print(f"Number of fresh IDs: {fresh_count}")
 # Change:
 # Goal is to find all of the ID's that are considered fresh based on the fresh ID ranges.
 
-def get_all_ids_from_fresh_ranges(fresh_ranges: list[range]) -> tuple[set[int], int]:
-    """Get all IDs that are considered fresh based on the provided fresh ID ranges.
+def count_all_ids_from_fresh_ranges(fresh_ranges: list[range]) -> int:
+    """Get count of IDs that are considered fresh based on the provided fresh ID ranges.
 
     Args:
         fresh_ranges (list of ranges): List of fresh ID ranges.
 
     Returns:
-        set of int: Set of all fresh IDs,
-        int: Count of all fresh IDs in set.
+        int: Count of all fresh IDs.
     """
-    fresh_id_set = set()
+    fresh_id_count = 0
     for r in fresh_ranges:
-        fresh_id_set.update(range(r.start, r.stop))  # Add all IDs in range to set
+        fresh_id_count += len(r)
 
-    fresh_id_count = len(fresh_id_set)
-
-    return fresh_id_set, fresh_id_count
+    return fresh_id_count
 
 
-fresh_id_set, fresh_id_count = get_all_ids_from_fresh_ranges(fresh_ranges)
-print(f"All fresh IDs {sorted(fresh_id_set)}")
+fresh_id_count = count_all_ids_from_fresh_ranges(fresh_ranges)
 print(f"Number of all fresh IDs: {fresh_id_count}")
