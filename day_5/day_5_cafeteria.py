@@ -19,6 +19,7 @@ import os
 folder_path = "day_5"
 file_name = "input.txt"
 sample_file_name = "input_sample.txt"
+edgecase_file_name = "input_recreate_edgecase.txt"
 
 # Reading sample file
 with open(os.path.join(folder_path, file_name), "r") as f:
@@ -140,20 +141,33 @@ def adjust_for_overlaps(start, end, fresh_ranges: list[range], sort_ranges=True)
     if sort_ranges:
         fresh_ranges = sorted(fresh_ranges, key=lambda r: r.start)
 
-    in_range, range_obj = check_id_status(start, fresh_ranges, return_range=True)
+    new_start, new_end = start, end
+
+    in_range, range_obj = check_id_status(new_start, fresh_ranges, return_range=True)
     while in_range:
-        start = range_obj.stop  # Move start to the end of the range it is currently overlapping
-        if start > end:
+        new_start = range_obj.stop  # Move start to the end of the range it is currently overlapping
+        if new_start > new_end:
             return None, None
-        in_range, range_obj = check_id_status(start, fresh_ranges, return_range=True)
+        in_range, range_obj = check_id_status(new_start, fresh_ranges, return_range=True)
         
-    in_range, range_obj = check_id_status(end, fresh_ranges, return_range=True)
+    in_range, range_obj = check_id_status(new_end, fresh_ranges, return_range=True)
     while in_range:
-        end = range_obj.start - 1  # Move end to the start-1 of the range it is currently overlapping
-        if end < start:
+        new_end = range_obj.start - 1  # Move end to the start-1 of the range it is currently overlapping
+        if new_end < new_start:
             return None, None
-        in_range, range_obj = check_id_status(end, fresh_ranges, return_range=True)
-    return start, end
+        in_range, range_obj = check_id_status(new_end, fresh_ranges, return_range=True)
+
+    # Sanity check
+    assert new_start >= 0 and new_end >= 0, "Error: Adjusted start or end is negative."
+    assert new_start >= start, "Error: After adjusting for overlaps, start is less than original start."
+    assert new_end <= end, "Error: After adjusting for overlaps, end is greater than original end."
+    assert new_start <= new_end, "Error: After adjusting for overlaps, start is greater than end."
+
+    # Extra sanity check
+    assert check_id_status(new_start, fresh_ranges, return_range=False) is False, "Error: Adjusted start is still in an existing range."
+    assert check_id_status(new_end, fresh_ranges, return_range=False) is False, "Error: Adjusted end is still in an existing range."
+
+    return new_start, new_end
     
 
 
