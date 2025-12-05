@@ -47,7 +47,7 @@ print(f"First 5 IDs to check: {doc_ids[:5]}")
 # [X] Turn on/off allowing overlapping ranges (if ranges overlap, remove them)
 # [ ] Turn on/off accumulating overlapping ranges (if ranges overlap, count IDs within them as fresh multiple times)
 # [X] Allow the possibility of ranges not being in order (e.g. "1-3", "5-3", "2-4" etc)
-# [-] Convert ranges to sets for faster checking (scratched due to not holding duplicates - Counter could be used, but probably not worth it)
+# [-] Convert ranges to sets for faster checking (scratched due to not holding duplicates - Counter or even better merge + bisect could be used, but probably not worth it)
 
 
 def parse_range_ids(doc_fresh: list[str], incl_start: bool = True, incl_end: bool = True, allow_overlaps: bool = True) -> list[range]:
@@ -162,3 +162,19 @@ print(f"Number of fresh IDs: {fresh_count}")
 ##  Part 2  ##
 ##############
 
+
+# Change:
+# Goal is to find all of the ID's that are considered fresh based on the fresh ID ranges.
+
+def count_all_ids_from_fresh_ranges(fresh_ranges: list[range]) -> int:
+    """Get count of IDs that are considered fresh based on the provided fresh ID ranges.
+
+    Args:
+        fresh_ranges (list of ranges): List of fresh ID ranges.
+
+    Returns:
+        int: Count of all fresh IDs.
+    """
+    return sum(len(r) for r in fresh_ranges)
+fresh_id_count = count_all_ids_from_fresh_ranges(fresh_ranges)
+print(f"Number of all fresh IDs: {fresh_id_count}")
