@@ -101,7 +101,7 @@ def check_all_ids(doc_ids: list[int], fresh_ranges: list[range]) -> int:
     return fresh_count
 
 
-def check_id_status(id_to_check: int, fresh_ranges: list[range], return_range=False):
+def check_id_status(id_to_check: int, fresh_ranges: list[range], return_range=False) -> bool | tuple[bool, range | None]:
     """Check if a given ID is fresh or spoiled based on the provided fresh ID ranges.
 
     Args:
