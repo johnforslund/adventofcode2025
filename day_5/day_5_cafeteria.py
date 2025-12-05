@@ -44,19 +44,20 @@ print(f"First 5 IDs to check: {doc_ids[:5]}")
 
 # Note: Possible functionality options:
 # [X] Turn on/off inclusive ranges on both ends (e.g. "3-5" means 3, 4 or 4, 5, or just 5)
-# [ ] Turn on/off allowing overlapping ranges (if ranges overlap, remove them)
+# [/] Turn on/off allowing overlapping ranges (if ranges overlap, remove them)
 # [ ] Turn on/off accumulating overlapping ranges (if ranges overlap, count IDs within them as fresh multiple times)
 # [X] Allow the possibility of ranges not being in order (e.g. "1-3", "5-3", "2-4" etc)
 # [-] Convert ranges to sets for faster checking (scratched due to not holding duplicates - Counter could be used, but probably not worth it)
 
 
-def parse_range_ids(doc_fresh: list[str], incl_start: bool = True, incl_end: bool = True) -> list[range]:
+def parse_range_ids(doc_fresh: list[str], incl_start: bool = True, incl_end: bool = True, allow_overlaps: bool = True) -> list[range]:
     """Parse the fresh ID ranges from the document (list of strings) into a list of range objects.
     
     Args:
         doc_fresh (list of str): List of fresh ID ranges as strings.
         incl_start (bool): Whether the start of the range is inclusive.
         incl_end (bool): Whether the end of the range is inclusive.
+        allow_overlaps (bool): Whether to allow overlapping ranges, e.g. "3-5" and "5-7" becomes "3-5" and "6-7" if False.
     
     Returns:
         fresh_ranges (list of ranges): List of range objects representing fresh ID ranges.
@@ -72,6 +73,11 @@ def parse_range_ids(doc_fresh: list[str], incl_start: bool = True, incl_end: boo
         start, end = int(start), int(end)   # Convert to integers e.g. 3, 5
         if start > end:
             start, end = end, start           # Swap to ensure start <= end
+        if not allow_overlaps:
+            start, end = check_overlaps(fresh_ranges)
+            if (start is None) or (end is None):
+                continue
+        print(f"Adding range: {start + adj_start}-{end + adj_end - 1}")
         fresh_ranges.append(range(start + adj_start, end + adj_end))  # Create range (inclusive, so end + 1)
         
     return fresh_ranges
@@ -112,10 +118,34 @@ def check_id_status(id_to_check: int, fresh_ranges: list[range]) -> bool:
     return False  # ID is spoiled
 
 
+def check_overlaps(start, end, adj_start, adj_end, fresh_ranges: list[range]) -> bool:
+    # TODO: Currently not working as intended - re-work this function to better handle narrowing of start and end
+    overlap_found = False
+    while check_id_status(start, fresh_ranges):
+        print(f"Overlap found at start ID {start}")
+        overlap_found = True
+        start += 1
+        if (start) == (end):
+            #print(f"WHILE LOOP #1 {start} to {end} fully overlaps with existing ranges.")
+            break
+        overlap_found = False
+    while check_id_status(end, fresh_ranges) and not overlap_found:
+        #print(f"Overlap found at end ID {end}")
+        overlap_found = True
+        end -= 1
+        if (end) == (start):
+            #print(f"WHILE LOOP #2 {end} to {start} fully overlaps with existing ranges.")
+            break
+        overlap_found = False
+    if overlap_found==False:
+        return start, end
+    else:
+        return None, None
+
+    
 
 
-
-fresh_ranges = parse_range_ids(doc_fresh, incl_start=False, incl_end=False)
+fresh_ranges = parse_range_ids(doc_fresh, incl_start=True, incl_end=True, allow_overlaps=True)
 fresh_count = check_all_ids(doc_ids, fresh_ranges)
 print(f"Number of fresh IDs: {fresh_count}")
 
