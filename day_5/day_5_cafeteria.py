@@ -21,7 +21,7 @@ file_name = "input.txt"
 sample_file_name = "input_sample.txt"
 
 # Reading sample file
-with open(os.path.join(folder_path, sample_file_name), "r") as f:
+with open(os.path.join(folder_path, file_name), "r") as f:
     document = f.read()
 
 # Splitting document into fresh batches (first lines with ranges, then blank line, then lines with IDs)
@@ -50,7 +50,7 @@ print(f"First 5 IDs to check: {doc_ids[:5]}")
 # [-] Convert ranges to sets for faster checking (scratched due to not holding duplicates - Counter or even better merge + bisect could be used, but probably not worth it)
 
 
-def parse_range_ids(doc_fresh: list[str], incl_start: bool = True, incl_end: bool = True, allow_overlaps: bool = True) -> list[range]:
+def parse_range_ids(doc_fresh: list[str], incl_start: bool = True, incl_end: bool = True, allow_overlaps: bool = True, sort_ranges: bool = True) -> list[range]:
     """Parse the fresh ID ranges from the document (list of strings) into a list of range objects.
     
     Args:
@@ -58,6 +58,7 @@ def parse_range_ids(doc_fresh: list[str], incl_start: bool = True, incl_end: boo
         incl_start (bool): Whether the start of the range is inclusive.
         incl_end (bool): Whether the end of the range is inclusive.
         allow_overlaps (bool): Whether to allow overlapping ranges, e.g. "3-5" and "5-7" becomes "3-5" and "6-7" if False.
+        sort_ranges (bool): Whether to sort the fresh_ranges (by lowest start) before checking for overlaps.
     
     Returns:
         fresh_ranges (list of ranges): List of range objects representing fresh ID ranges.
@@ -74,7 +75,7 @@ def parse_range_ids(doc_fresh: list[str], incl_start: bool = True, incl_end: boo
         if start > end:
             start, end = end, start           # Swap to ensure start <= end
         if not allow_overlaps:
-            start, end = adjust_for_overlaps(start, end, fresh_ranges)
+            start, end = adjust_for_overlaps(start, end, fresh_ranges, sort_ranges=True)
             if (start is None) or (end is None):
                 continue
         
@@ -123,17 +124,21 @@ def check_id_status(id_to_check: int, fresh_ranges: list[range], return_range=Fa
     return False  # ID is spoiled
 
 
-def adjust_for_overlaps(start, end, fresh_ranges: list[range]) -> tuple[int | None, int | None]:
+def adjust_for_overlaps(start, end, fresh_ranges: list[range], sort_ranges=True) -> tuple[int | None, int | None]:
     """Adjust the start and end of a range to avoid overlaps with existing fresh ranges.
 
     Args:
         start (int): Start of the range.
         end (int): End of the range.
         fresh_ranges (list of ranges): List of existing fresh ID ranges.
+        sort_ranges (bool): Whether to sort the fresh_ranges (by lowest start) before checking.
 
     Returns:
         tuple: Adjusted start and end of the range, or (None, None) if completely overlapped.
     """
+
+    if sort_ranges:
+        fresh_ranges = sorted(fresh_ranges, key=lambda r: r.start)
 
     in_range, range_obj = check_id_status(start, fresh_ranges, return_range=True)
     while in_range:
@@ -152,7 +157,7 @@ def adjust_for_overlaps(start, end, fresh_ranges: list[range]) -> tuple[int | No
     
 
 
-fresh_ranges = parse_range_ids(doc_fresh, incl_start=True, incl_end=True, allow_overlaps=False)
+fresh_ranges = parse_range_ids(doc_fresh, incl_start=True, incl_end=True, allow_overlaps=True)
 fresh_count = check_all_ids(doc_ids, fresh_ranges)
 print(f"Number of fresh IDs: {fresh_count}")
 
@@ -177,6 +182,8 @@ def count_all_ids_from_fresh_ranges(fresh_ranges: list[range]) -> int:
     """
     return sum(len(r) for r in fresh_ranges)
 
+
+fresh_ranges = parse_range_ids(doc_fresh, incl_start=True, incl_end=True, allow_overlaps=False, sort_ranges=True)
 fresh_id_count = count_all_ids_from_fresh_ranges(fresh_ranges)
 print(f"Number of all fresh IDs: {fresh_id_count}")
 
