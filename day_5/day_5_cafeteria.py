@@ -21,7 +21,7 @@ file_name = "input.txt"
 sample_file_name = "input_sample.txt"
 
 # Reading sample file
-with open(os.path.join(folder_path, file_name), "r") as f:
+with open(os.path.join(folder_path, sample_file_name), "r") as f:
     document = f.read()
 
 # Splitting document into fresh batches (first lines with ranges, then blank line, then lines with IDs)
@@ -44,7 +44,7 @@ print(f"First 5 IDs to check: {doc_ids[:5]}")
 
 # Note: Possible functionality options:
 # [X] Turn on/off inclusive ranges on both ends (e.g. "3-5" means 3, 4 or 4, 5, or just 5)
-# [/] Turn on/off allowing overlapping ranges (if ranges overlap, remove them)
+# [X] Turn on/off allowing overlapping ranges (if ranges overlap, remove them)
 # [ ] Turn on/off accumulating overlapping ranges (if ranges overlap, count IDs within them as fresh multiple times)
 # [X] Allow the possibility of ranges not being in order (e.g. "1-3", "5-3", "2-4" etc)
 # [-] Convert ranges to sets for faster checking (scratched due to not holding duplicates - Counter could be used, but probably not worth it)
@@ -101,38 +101,53 @@ def check_all_ids(doc_ids: list[int], fresh_ranges: list[range]) -> int:
     return fresh_count
 
 
-def check_id_status(id_to_check: int, fresh_ranges: list[range]) -> bool:
+def check_id_status(id_to_check: int, fresh_ranges: list[range], return_range=False):
     """Check if a given ID is fresh or spoiled based on the provided fresh ID ranges.
 
     Args:
         id_to_check (int): The ID to check.
         fresh_ranges (list of ranges): List of fresh ID ranges.
+        return_range (bool): Whether to return the range object if found.
 
     Returns:
         bool: True if the ID is fresh, False if it is spoiled.
+        (optionally) range: The range object if the ID is fresh and return_range is True.
     """
     for r in fresh_ranges:
         if id_to_check in r:
+            if return_range:
+                return True, r  # ID is fresh, return range
             return True  # ID is fresh
-
+    if return_range:
+        return False, None  # ID is spoiled, no range
     return False  # ID is spoiled
 
 
 def adjust_for_overlaps(start, end, fresh_ranges: list[range]) -> bool:
-    # TODO: Currently not working as intended - re-work this function to better handle narrowing of start and end
+    """Adjust the start and end of a range to avoid overlaps with existing fresh ranges.
 
-    while check_id_status(start, fresh_ranges):
-        #print(f"Overlap found at start ID {start}")
-        start += 1
+    Args:
+        start (int): Start of the range.
+        end (int): End of the range.
+        fresh_ranges (list of ranges): List of existing fresh ID ranges.
+
+    Returns:
+        tuple: Adjusted start and end of the range, or (None, None) if completely overlapped.
+    """
+
+    in_range, range_obj = check_id_status(start, fresh_ranges, return_range=True)
+    while in_range:
+        start = range_obj.stop  # Move start to the end of the range it is currently overlapping
         if start > end:
-            #print(f"WHILE LOOP #1 {start} > {end}")
             return None, None
-    while check_id_status(end, fresh_ranges): #and not overlap_found:
-        #print(f"Overlap found at end ID {end}")
-        end -= 1
+        in_range, range_obj = check_id_status(start, fresh_ranges, return_range=True)
+        
+    in_range, range_obj = check_id_status(end, fresh_ranges, return_range=True)
+    while in_range:
+        end = range_obj.start - 1  # Move end to the start-1 of the range it is currently overlapping
         if end < start:
-            #print(f"WHILE LOOP #2 end: {end} > start: {start}")
             return None, None
+        in_range, range_obj = check_id_status(end, fresh_ranges, return_range=True)
     return start, end
     
 
