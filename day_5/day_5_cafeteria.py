@@ -125,3 +125,19 @@ print(f"Number of fresh IDs: {fresh_count}")
 ##  Part 2  ##
 ##############
 
+
+# Change:
+# Goal is to find all of the ID's that are considered fresh based on the fresh ID ranges.
+
+def count_all_ids_from_fresh_ranges(fresh_ranges: list[range]) -> int:
+    """Get count of IDs that are considered fresh based on the provided fresh ID ranges.
+
+    Args:
+        fresh_ranges (list of ranges): List of fresh ID ranges.
+
+    Returns:
+        int: Count of all fresh IDs.
+    """
+    return sum(len(r) for r in fresh_ranges)
+fresh_id_count = count_all_ids_from_fresh_ranges(fresh_ranges)
+print(f"Number of all fresh IDs: {fresh_id_count}")
