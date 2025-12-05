@@ -123,7 +123,7 @@ def check_id_status(id_to_check: int, fresh_ranges: list[range], return_range=Fa
     return False  # ID is spoiled
 
 
-def adjust_for_overlaps(start, end, fresh_ranges: list[range]) -> bool:
+def adjust_for_overlaps(start, end, fresh_ranges: list[range]) -> tuple[int | None, int | None]:
     """Adjust the start and end of a range to avoid overlaps with existing fresh ranges.
 
     Args:
