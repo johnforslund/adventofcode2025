@@ -46,8 +46,8 @@ print(f"First 5 IDs to check: {doc_ids[:5]}")
 # [X] Turn on/off inclusive ranges on both ends (e.g. "3-5" means 3, 4 or 4, 5, or just 5)
 # [ ] Turn on/off allowing overlapping ranges (if ranges overlap, remove them)
 # [ ] Turn on/off accumulating overlapping ranges (if ranges overlap, count IDs within them as fresh multiple times)
-# [ ] Allow the possibility of ranges not being in order (e.g. "1-3", "5-3", "2-4" etc)
-# [ ] Convert ranges to sets for faster checking (scratched due to not holding duplicates - Counter could be used, but probably not worth it)
+# [X] Allow the possibility of ranges not being in order (e.g. "1-3", "5-3", "2-4" etc)
+# [-] Convert ranges to sets for faster checking (scratched due to not holding duplicates - Counter could be used, but probably not worth it)
 
 
 def parse_range_ids(doc_fresh: list[str], incl_start: bool = True, incl_end: bool = True) -> list[range]:
@@ -70,6 +70,8 @@ def parse_range_ids(doc_fresh: list[str], incl_start: bool = True, incl_end: boo
     for r in doc_fresh:
         start, end = r.split("-")           # Split from e.g. "3-5" to "3", "5"
         start, end = int(start), int(end)   # Convert to integers e.g. 3, 5
+        if start > end:
+            start, end = end, start           # Swap to ensure start <= end
         fresh_ranges.append(range(start + adj_start, end + adj_end))  # Create range (inclusive, so end + 1)
         
     return fresh_ranges
