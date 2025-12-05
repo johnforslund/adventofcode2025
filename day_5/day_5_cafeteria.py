@@ -77,7 +77,7 @@ def parse_range_ids(doc_fresh: list[str], incl_start: bool = True, incl_end: boo
             start, end = adjust_for_overlaps(start, end, fresh_ranges)
             if (start is None) or (end is None):
                 continue
-        #print(f"Adding range: {start + adj_start}-{end + adj_end - 1}")
+        
         fresh_ranges.append(range(start + adj_start, end + adj_end))  # Create range (inclusive, so end + 1)
         
     return fresh_ranges
