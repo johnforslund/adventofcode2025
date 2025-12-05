@@ -50,7 +50,7 @@ print(f"First 5 IDs to check: {doc_ids[:5]}")
 # - Convert ranges to sets for faster checking (scratched due to not holding duplicates - Counter could be used, but probably not worth it)
 
 
-def parse_range_ids(doc_fresh: list[str]) -> list[range]:
+def parse_range_ids(doc_fresh: list[str], incl_start: bool, incl_end: bool) -> list[range]:
     """Parse the fresh ID ranges from the document (list of strings) into a list of range objects.
     
     Args:
@@ -59,11 +59,16 @@ def parse_range_ids(doc_fresh: list[str]) -> list[range]:
     Returns:
         fresh_ranges (list of ranges): List of range objects representing fresh ID ranges.
     """
+    # Initialize variables
     fresh_ranges = []       # Create empty list, to hold ranges (e.g. range(start, end))
+    adj_start = 0 if incl_start else 1
+    adj_end = 1 if incl_end else 0
+
+    # Parse each range string into a range object
     for r in doc_fresh:
         start, end = r.split("-")           # Split from e.g. "3-5" to "3", "5"
         start, end = int(start), int(end)   # Convert to integers e.g. 3, 5
-        fresh_ranges.append(range(start, end + 1))  # Create range (inclusive, so end + 1)
+        fresh_ranges.append(range(start + adj_start, end + adj_end))  # Create range (inclusive, so end + 1)
         
     return fresh_ranges
 
@@ -106,7 +111,7 @@ def check_id_status(id_to_check: int, fresh_ranges: list[range]) -> bool:
 
 
 
-fresh_ranges = parse_range_ids(doc_fresh)
+fresh_ranges = parse_range_ids(doc_fresh, incl_start=True, incl_end=True)
 fresh_count = check_all_ids(doc_ids, fresh_ranges)
 print(f"Number of fresh IDs: {fresh_count}")
 
