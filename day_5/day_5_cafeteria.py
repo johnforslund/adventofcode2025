@@ -43,18 +43,20 @@ print(f"First 5 IDs to check: {doc_ids[:5]}")
 # Output is the number of fresh ingredient IDs.
 
 # Note: Possible functionality options:
-# - Turn on/off inclusive ranges on both ends (e.g. "3-5" means 3, 4 or 4, 5, or just 5)
-# - Turn on/off allowing overlapping ranges (if ranges overlap, remove them)
-# - Turn on/off accumulating overlapping ranges (if ranges overlap, count IDs within them as fresh multiple times)
-# - Allow the possibility of ranges not being in order (e.g. "1-3", "5-3", "2-4" etc)
-# - Convert ranges to sets for faster checking (scratched due to not holding duplicates - Counter could be used, but probably not worth it)
+# [X] Turn on/off inclusive ranges on both ends (e.g. "3-5" means 3, 4 or 4, 5, or just 5)
+# [ ] Turn on/off allowing overlapping ranges (if ranges overlap, remove them)
+# [ ] Turn on/off accumulating overlapping ranges (if ranges overlap, count IDs within them as fresh multiple times)
+# [ ] Allow the possibility of ranges not being in order (e.g. "1-3", "5-3", "2-4" etc)
+# [ ] Convert ranges to sets for faster checking (scratched due to not holding duplicates - Counter could be used, but probably not worth it)
 
 
-def parse_range_ids(doc_fresh: list[str], incl_start: bool, incl_end: bool) -> list[range]:
+def parse_range_ids(doc_fresh: list[str], incl_start: bool = True, incl_end: bool = True) -> list[range]:
     """Parse the fresh ID ranges from the document (list of strings) into a list of range objects.
     
     Args:
         doc_fresh (list of str): List of fresh ID ranges as strings.
+        incl_start (bool): Whether the start of the range is inclusive.
+        incl_end (bool): Whether the end of the range is inclusive.
     
     Returns:
         fresh_ranges (list of ranges): List of range objects representing fresh ID ranges.
@@ -111,7 +113,7 @@ def check_id_status(id_to_check: int, fresh_ranges: list[range]) -> bool:
 
 
 
-fresh_ranges = parse_range_ids(doc_fresh, incl_start=True, incl_end=True)
+fresh_ranges = parse_range_ids(doc_fresh, incl_start=False, incl_end=False)
 fresh_count = check_all_ids(doc_ids, fresh_ranges)
 print(f"Number of fresh IDs: {fresh_count}")
 
