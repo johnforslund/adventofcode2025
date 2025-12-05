@@ -21,7 +21,7 @@ file_name = "input.txt"
 sample_file_name = "input_sample.txt"
 
 # Reading sample file
-with open(os.path.join(folder_path, sample_file_name), "r") as f:
+with open(os.path.join(folder_path, file_name), "r") as f:
     document = f.read()
 
 # Splitting document into fresh batches (first lines with ranges, then blank line, then lines with IDs)
@@ -125,3 +125,29 @@ print(f"Number of fresh IDs: {fresh_count}")
 ##  Part 2  ##
 ##############
 
+
+# Change:
+# Goal is to find all of the ID's that are considered fresh based on the fresh ID ranges.
+
+def get_all_ids_from_fresh_ranges(fresh_ranges: list[range]) -> set[int]:
+    """Get all IDs that are considered fresh based on the provided fresh ID ranges.
+
+    Args:
+        fresh_ranges (list of ranges): List of fresh ID ranges.
+
+    Returns:
+        set of int: Set of all fresh IDs,
+        int: Count of all fresh IDs in set.
+    """
+    fresh_id_set = set()
+    for r in fresh_ranges:
+        fresh_id_set.update(range(r.start, r.stop))  # Add all IDs in range to set
+
+    fresh_id_count = len(fresh_id_set)
+
+    return fresh_id_set, fresh_id_count
+
+
+fresh_id_set, fresh_id_count = get_all_ids_from_fresh_ranges(fresh_ranges)
+print(f"All fresh IDs {sorted(fresh_id_set)}")
+print(f"Number of all fresh IDs: {fresh_id_count}")
