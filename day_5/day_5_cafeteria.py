@@ -21,7 +21,7 @@ file_name = "input.txt"
 sample_file_name = "input_sample.txt"
 
 # Reading sample file
-with open(os.path.join(folder_path, sample_file_name), "r") as f:
+with open(os.path.join(folder_path, file_name), "r") as f:
     document = f.read()
 
 # Splitting document into fresh batches (first lines with ranges, then blank line, then lines with IDs)
@@ -74,10 +74,10 @@ def parse_range_ids(doc_fresh: list[str], incl_start: bool = True, incl_end: boo
         if start > end:
             start, end = end, start           # Swap to ensure start <= end
         if not allow_overlaps:
-            start, end = check_overlaps(fresh_ranges)
+            start, end = adjust_for_overlaps(start, end, fresh_ranges)
             if (start is None) or (end is None):
                 continue
-        print(f"Adding range: {start + adj_start}-{end + adj_end - 1}")
+        #print(f"Adding range: {start + adj_start}-{end + adj_end - 1}")
         fresh_ranges.append(range(start + adj_start, end + adj_end))  # Create range (inclusive, so end + 1)
         
     return fresh_ranges
@@ -118,34 +118,26 @@ def check_id_status(id_to_check: int, fresh_ranges: list[range]) -> bool:
     return False  # ID is spoiled
 
 
-def check_overlaps(start, end, adj_start, adj_end, fresh_ranges: list[range]) -> bool:
+def adjust_for_overlaps(start, end, fresh_ranges: list[range]) -> bool:
     # TODO: Currently not working as intended - re-work this function to better handle narrowing of start and end
-    overlap_found = False
-    while check_id_status(start, fresh_ranges):
-        print(f"Overlap found at start ID {start}")
-        overlap_found = True
-        start += 1
-        if (start) == (end):
-            #print(f"WHILE LOOP #1 {start} to {end} fully overlaps with existing ranges.")
-            break
-        overlap_found = False
-    while check_id_status(end, fresh_ranges) and not overlap_found:
-        #print(f"Overlap found at end ID {end}")
-        overlap_found = True
-        end -= 1
-        if (end) == (start):
-            #print(f"WHILE LOOP #2 {end} to {start} fully overlaps with existing ranges.")
-            break
-        overlap_found = False
-    if overlap_found==False:
-        return start, end
-    else:
-        return None, None
 
+    while check_id_status(start, fresh_ranges):
+        #print(f"Overlap found at start ID {start}")
+        start += 1
+        if start > end:
+            #print(f"WHILE LOOP #1 {start} > {end}")
+            return None, None
+    while check_id_status(end, fresh_ranges): #and not overlap_found:
+        #print(f"Overlap found at end ID {end}")
+        end -= 1
+        if end < start:
+            #print(f"WHILE LOOP #2 end: {end} > start: {start}")
+            return None, None
+    return start, end
     
 
 
-fresh_ranges = parse_range_ids(doc_fresh, incl_start=True, incl_end=True, allow_overlaps=True)
+fresh_ranges = parse_range_ids(doc_fresh, incl_start=True, incl_end=True, allow_overlaps=False)
 fresh_count = check_all_ids(doc_ids, fresh_ranges)
 print(f"Number of fresh IDs: {fresh_count}")
 
