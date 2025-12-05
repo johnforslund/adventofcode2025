@@ -138,12 +138,6 @@ def count_all_ids_from_fresh_ranges(fresh_ranges: list[range]) -> int:
     Returns:
         int: Count of all fresh IDs.
     """
-    fresh_id_count = 0
-    for r in fresh_ranges:
-        fresh_id_count += len(r)
-
-    return fresh_id_count
-
-
+    return sum(len(r) for r in fresh_ranges)
 fresh_id_count = count_all_ids_from_fresh_ranges(fresh_ranges)
 print(f"Number of all fresh IDs: {fresh_id_count}")
