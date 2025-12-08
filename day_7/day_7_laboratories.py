@@ -18,7 +18,7 @@ folder_path = "day_7"
 file_name = "input.txt"
 sample_file_name = "input_sample.txt"
 
-with open(os.path.join(folder_path, sample_file_name), "r") as f:
+with open(os.path.join(folder_path, file_name), "r") as f:
     original_document = f.read()
 
 # Splitting document into lines
@@ -46,6 +46,9 @@ for i in range(1, modified_array.shape[0]):
     all_available = modified_array[i] != "^"  # Checking if the candidate positions in the current row are not blocked by a "^"
     beam_available = beam_mask & all_available   # Candidate positions where the beam can go down without splitting
     beam_splitting = beam_mask & ~beam_available   # Candidate positions where the beam would need to split (i.e. blocked directly below)
+    
+    # Counting the splits (the True values in beam_splitting)
+    split_counter += np.sum(beam_splitting)
 
     # Set the beam in the current row only where the candidate positions are available (not blocked)
     modified_array[i, beam_available] = "|"
@@ -61,3 +64,6 @@ for i in range(1, modified_array.shape[0]):
     
     # Sets the (available) left and right positions to "|"
     modified_array[i, left | right] = "|"   
+
+
+print(f"Number of splits: {split_counter}")
