@@ -13,12 +13,17 @@
 import numpy as np
 import os
 
+
+##################
+###   Part 1   ###
+##################
+
 # Initializing variables
 folder_path = "day_7"
 file_name = "input.txt"
 sample_file_name = "input_sample.txt"
 
-with open(os.path.join(folder_path, file_name), "r") as f:
+with open(os.path.join(folder_path, sample_file_name), "r") as f:
     original_document = f.read()
 
 # Splitting document into lines
@@ -67,3 +72,94 @@ for i in range(1, modified_array.shape[0]):
 
 
 print(f"Number of splits: {split_counter}")
+
+
+##################
+###   Part 2   ###
+##################
+
+# Changes:
+# The beam now goes left OR right when going through a splitter.
+# Every time the beam DOESNT go left OR right (but it is possible) creates a new timeline.
+# We need to count all possible timelines.
+
+# Initializing variables
+folder_path = "day_7"
+file_name = "input.txt"
+sample_file_name = "input_sample.txt"
+
+with open(os.path.join(folder_path, sample_file_name), "r") as f:
+    original_document = f.read()
+
+# Splitting document into lines
+original_document = original_document.split("\n")
+
+# Converting to numpy array for easier manipulation
+original_array = np.array([list(line) for line in original_document])
+
+# Checking input
+print(f"Number of problems: {len(original_document)}")
+print(f"Length of first row: {len(original_document[0])}")
+print(f"Length of last row: {len(original_document[-1])}")
+
+# Finding the index of the starting point "S"
+modified_array = original_array.copy()
+
+# Set starting S symbol as | instead, for consistency
+modified_array[0, np.where(modified_array[0] == "S")[0][0]] = "|"
+
+# Initialize counter for when beam is split
+split_counter = 0
+
+# Initialize number of timelines
+num_timelines = 1
+
+
+# Prepare for counts[j] = number of timelines that have a beam at column j in the current row
+nrows, ncols = modified_array.shape
+start_idx = np.where(modified_array[0] == "|")[0][0]
+
+counts = [0] * ncols
+counts[start_idx] = 1
+
+split_counter = 0
+
+for i in range(1, nrows):
+    all_available = modified_array[i] != "^"      # positions that can accept a beam straight down / be occupied
+    next_counts = [0] * ncols                 # prepare next row counts
+
+    # For visualization/union of reachable positions across all timelines:
+    row_any_beam = np.zeros(ncols, dtype=bool)
+
+    for j, c in enumerate(counts):
+        if c == 0:          # skip columns with no possible timelines
+            continue
+        if all_available[j]:    # beam goes straight down (no split)
+            next_counts[j] += c     # all c timelines go straight down
+            row_any_beam[j] = True  # mark this position as having a beam in at least one timeline
+        else:       # cell below is blocked
+            # beam cannot go straight; try left and/or right
+            left_added = False
+            right_added = False
+            if j - 1 >= 0 and all_available[j - 1]:     # can go left
+                next_counts[j - 1] += c     # all c timelines go left
+                row_any_beam[j - 1] = True  # mark this position as having a beam in at least one timeline
+                left_added = True           # mark that we added left
+            if j + 1 < ncols and all_available[j + 1]:     # can go right
+                next_counts[j + 1] += c     # all c timelines go right
+                row_any_beam[j + 1] = True  # mark this position as having a beam in at least one timeline
+                right_added = True          # mark that we added right
+            # count this as a split event if there was at least one blocked-down beam here
+            if left_added or right_added:
+                # If both sides available, this beam's timelines doubled (counts duplicated across two targets).
+                # Count this as a split occurrence for diagnostics.
+                split_counter += 1
+
+    # Update modified_array row to show union of reachable positions (not necessary for counting timelines)
+    modified_array[i, row_any_beam] = "|"
+
+    counts = next_counts    # Move to next row
+
+num_timelines = sum(counts)     # Total timelines is sum of all timelines reaching the last row
+print(f"Number of splits: {split_counter}")
+print(f"Number of timelines: {num_timelines}")
