@@ -61,9 +61,45 @@ df = original_df.copy()
 df["NN_Index"] = -1
 df["NN_Distance"] = np.inf
 df["Group_ID"] = -1
-groups = {}
 
-for i in range(n//2):
+class UnionFind:
+    """
+    A union-find (disjoint-set) data structure with path-compression and union by size.
+    """
+    def __init__(self, n):
+        # Initialize n disjoint sets
+        self.parent = list(range(n))
+        self.size = [1] * n
+    def find(self, a):
+        # Find root of set containing a
+        # with path-compression, find root
+        while self.parent[a] != a:
+            self.parent[a] = self.parent[self.parent[a]]
+            a = self.parent[a]
+        return a
+    def union(self, a, b):
+        # Union two sets, return False if already in the same set
+        ra, rb = self.find(a), self.find(b)
+        if ra == rb:
+            return False
+        # Union by size, attach smaller tree to larger tree
+        if self.size[ra] < self.size[rb]:
+            ra, rb = rb, ra
+        self.parent[rb] = ra
+        self.size[ra] += self.size[rb]
+        return True
+    def groups(self):
+        # Return a dictionary of root -> list of members
+        roots = {}
+        for i in range(len(self.parent)):
+            r = self.find(i)
+            roots.setdefault(r, []).append(i)
+        return roots
+    
+
+uf = UnionFind(n)
+
+for i in range(n):
     # Find nearest neighbor for each junction box
     df["NN_Index"] = np.argmin(pairwise_dist, axis=1)
     df["NN_Distance"] = np.min(pairwise_dist, axis=1)
@@ -75,45 +111,27 @@ for i in range(n//2):
     group_id = int()
 
     # Check if either box is already assigned to a group
+    # Use union-find to merge clusters safely (and easier)
     A_group = int(df.iloc[A_index].Group_ID)
     B_group = int(df.iloc[B_index].Group_ID)
     print(f"Connecting box {A_index} (group {A_group}) and box {B_index} (group {B_group}) with distance {min_distance_row.NN_Distance}")
-    if A_group == -1 and B_group == -1:
-        # Neither box is in a group already, create new group
-        group_id = len(groups)      # Begins at 0, then 1 etc
-        groups[group_id] = [A_index, B_index]
-        df.loc[groups[group_id], "Group_ID"] = group_id
-    elif A_group != -1 and B_group == -1:
-        # A is in a group, B is not - add B to A's group
-        group_id = A_group
-        groups[group_id].append(B_index)
-        df.loc[B_index, "Group_ID"] = group_id
-    elif A_group == -1 and B_group != -1:
-        # B is in a group, A is not - add A to B's group
-        group_id = B_group
-        groups[group_id].append(A_index)
-        df.loc[A_index, "Group_ID"] = group_id
-    else:
-        # Both are already in groups - combine them into A's group unless they are the same
-        if A_group != B_group:
-            # Merge B's group into A's group
-            group_id = A_group
-            for idx in groups[B_group]:
-                groups[group_id].append(idx)
-                df.loc[idx, "Group_ID"] = group_id
-            del groups[B_group]
+    uf.union(A_index, B_index)  # Union the two boxes(/groups)
+    # Set Group_ID field to the current root for the two touched nodes
+    root = int(uf.find(A_index))
+    df.loc[[A_index, B_index], "Group_ID"] = root
 
     # Set their pairwise distance to infinity to avoid re-selection
     pairwise_dist[A_index, B_index] = np.inf
     pairwise_dist[B_index, A_index] = np.inf
 
 
-
-# Get the three highest group sizes
-group_sizes = sorted([len(members) for members in groups.values()], reverse=True)
+# Get the three highest group sizes (only consider groups of size >= 2 to match previous behaviour)
+uf_groups = uf.groups()
+group_sizes = sorted([len(members) for members in uf_groups.values() if len(members) >= 2], reverse=True)
 top_3_sizes = group_sizes[:3]
 
 # Multiply the sizes of the three largest groups
 top_3_multiplied = np.prod(top_3_sizes)
 
-
+print(f"Sizes of the three largest groups: {top_3_sizes}")
+print(f"Product of sizes of the three largest groups: {top_3_multiplied}")
