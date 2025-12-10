@@ -82,17 +82,94 @@ pairwise_dist = np.sqrt(np.sum(diffs**2, axis=2))   # Euclidean distances to all
 mask = np.triu(np.ones((n, n), dtype=bool), k=1)
 upper_dists = np.where(mask, pairwise_dist, np.inf)
 
-# Find indices of the minimum distance pair
-flat_min_idx = np.argmin(upper_dists)
-i_min, j_min = np.unravel_index(flat_min_idx, upper_dists.shape)
+############################
+##  Nearest-Neighbor Pair ##
+############################
 
-closest_row_i = original_df.iloc[i_min]
-closest_row_j = original_df.iloc[j_min]
-closest_distance = upper_dists[i_min, j_min]
+def nearest_neighbor_indices(upper_dists: np.ndarray) -> np.ndarray:
+    # Find overall closest pair once (upper triangle min)
+    nn_list = []
+    for x in range(n):
+        flat_min_idx = np.argmin(upper_dists[x])
+        nn_list.append(flat_min_idx)
+        #i_min, j_min = np.unravel_index(flat_min_idx, upper_dists.shape)
+        #closest_row_i = original_df.iloc[i_min]
+        #closest_row_j = original_df.iloc[j_min]
+        #closest_distance = upper_dists[i_min, j_min]
+    # Convert to numpy array
+    return np.array(nn_list)
+
 
 print("\nClosest pair by Euclidean distance between junction boxes:")
 print(f"Row indices: {i_min} and {j_min}")
 print(f"Coordinates A: {int(closest_row_i['X'])}, {int(closest_row_i['Y'])}, {int(closest_row_i['Z'])}")
 print(f"Coordinates B: {int(closest_row_j['X'])}, {int(closest_row_j['Y'])}, {int(closest_row_j['Z'])}")
 print(f"Euclidean distance between A and B: {closest_distance:.6f}")
+
+########################################
+##  Build Groups via Nearest Neighbors ##
+########################################
+# For each box, connect it to its single nearest neighbor.
+# Then merge connections into groups using union-find.
+
+def nearest_neighbor_indices(dist_matrix: np.ndarray) -> np.ndarray:
+    # Set diagonal to inf to ignore self
+    with np.errstate(invalid='ignore'):
+        np.fill_diagonal(dist_matrix, np.inf)
+    # Argmin per row gives nearest neighbor index for each node
+    return np.argmin(dist_matrix, axis=1)
+
+nn = nearest_neighbor_indices(upper_dists)
+
+# Union-Find (Disjoint Set Union) implementation
+parent = list(range(n))
+rank = [0] * n
+
+def find(x: int) -> int:
+    while parent[x] != x:
+        parent[x] = parent[parent[x]]
+        x = parent[x]
+    return x
+
+def union(a: int, b: int) -> None:
+    ra, rb = find(a), find(b)
+    if ra == rb:
+        return
+    if rank[ra] < rank[rb]:
+        parent[ra] = rb
+    elif rank[ra] > rank[rb]:
+        parent[rb] = ra
+    else:
+        parent[rb] = ra
+        rank[ra] += 1
+
+# Create edges from each node to its nearest neighbor and union them
+for i in range(n):
+    j = nn[i]
+    union(i, j)
+
+# Collect groups
+groups = {}
+for i in range(n):
+    r = find(i)
+    groups.setdefault(r, []).append(i)
+
+print("\nGroups of connected junction boxes (via nearest-neighbor unions):")
+for root, members in groups.items():
+    coords_list = [
+        (
+            int(original_df.iloc[idx]['X']),
+            int(original_df.iloc[idx]['Y']),
+            int(original_df.iloc[idx]['Z'])
+        ) for idx in members
+    ]
+    print(f"Group root {root} | size {len(members)} | indices {members}")
+    print(f"  Coordinates: {coords_list}")
+
+# Get the three highest group sizes
+group_sizes = sorted([len(members) for members in groups.values()], reverse=True)
+top_3_sizes = group_sizes[:3]
+
+# Multiply the sizes of the three largest groups
+top_3_multiplied = np.prod(top_3_sizes)
 
