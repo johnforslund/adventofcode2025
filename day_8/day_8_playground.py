@@ -99,7 +99,12 @@ class UnionFind:
 
 uf = UnionFind(n)
 
+""" # Part 1:
 for i in range(n):
+"""
+
+# Part 2:
+while len(uf.groups()) != 1:
     # Find nearest neighbor for each junction box
     df["NN_Index"] = np.argmin(pairwise_dist, axis=1)
     df["NN_Distance"] = np.min(pairwise_dist, axis=1)
@@ -133,5 +138,10 @@ top_3_sizes = group_sizes[:3]
 # Multiply the sizes of the three largest groups
 top_3_multiplied = np.prod(top_3_sizes)
 
+print("Part 1:")
 print(f"Sizes of the three largest groups: {top_3_sizes}")
 print(f"Product of sizes of the three largest groups: {top_3_multiplied}")
+
+print("Part 2:")
+print(f"Last box connections made: {A_index} and {B_index}")
+print(f"Multiplication of X coordinates: {df.iloc[A_index]['X']} * {df.iloc[B_index]['X']} = {int(df.iloc[A_index]['X']) * int(df.iloc[B_index]['X'])}")
